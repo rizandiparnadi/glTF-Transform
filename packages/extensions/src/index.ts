@@ -81,6 +81,7 @@ export * from './khr-materials-unlit/index.js';
 export * from './khr-materials-variants/index.js';
 export * from './khr-materials-volume/index.js';
 export * from './khr-mesh-quantization/index.js';
+export * from './khr-physics-rigid-bodies/index.js';
 export * from './khr-texture-basisu/index.js';
 export * from './khr-texture-transform/index.js';
 export * from './khr-xmp-json-ld/index.js';
