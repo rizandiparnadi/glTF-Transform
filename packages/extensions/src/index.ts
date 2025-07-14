@@ -23,9 +23,11 @@ import { KHRMeshQuantization } from './khr-mesh-quantization/index.js';
 import { KHRTextureBasisu } from './khr-texture-basisu/index.js';
 import { KHRTextureTransform } from './khr-texture-transform/index.js';
 import { KHRXMP } from './khr-xmp-json-ld/index.js';
+import { KHRImplicitShapes } from './khr-implicit-shapes/implicit-shapes.js';
 
 export const KHRONOS_EXTENSIONS: (typeof Extension)[] = [
 	KHRDracoMeshCompression,
+	KHRImplicitShapes,
 	KHRLightsPunctual,
 	KHRMaterialsAnisotropy,
 	KHRMaterialsClearcoat,
@@ -79,3 +81,4 @@ export * from './khr-mesh-quantization/index.js';
 export * from './khr-texture-basisu/index.js';
 export * from './khr-texture-transform/index.js';
 export * from './khr-xmp-json-ld/index.js';
+export * from './khr-implicit-shapes/index.js';
