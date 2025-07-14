@@ -26,27 +26,27 @@ export class Collider extends ExtensionProperty<ICollider> {
         this.parentTypes = [PropertyType.NODE];
     }
 
-    protected getDefaults(): Nullable<ICollider> {
+    protected getDefaults(): ICollider {
         return Object.assign(super.getDefaults() as IProperty, {
-            geometry: null,
-            physicsMaterial: null,
+            geometry: new Geometry(this.graph),
+            physicsMaterial: new PhysicsMaterial(this.graph),
             collisionFilter: null
         });
     }
 
     /** The geometry used for this collider. */
-    public getGeometry(): Geometry | null {
-        return this.getRef('geometry');
+    public getGeometry(): Geometry {
+        return this.getRef('geometry')!;
     }
 
     /** The geometry used for this collider. */
-    public setGeometry(geometry: Geometry | null): this {
+    public setGeometry(geometry: Geometry): this {
         return this.setRef('geometry', geometry);
     }
 
     /** The physics material index for this collider. */
-    public getPhysicsMaterial(): PhysicsMaterial | null {
-        return this.getRef('physicsMaterial');
+    public getPhysicsMaterial(): PhysicsMaterial {
+        return this.getRef('physicsMaterial')!;
     }
 
     /** The physics material index for this collider. */

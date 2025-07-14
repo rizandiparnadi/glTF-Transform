@@ -81,9 +81,18 @@ export class KHRImplicitShapes extends Extension {
         return cylinder;
     }
 
-    /** Returns the shape object at the given index. */
+    /** Returns the shape object at the given index in this extension. */
     public getShape(index: number): Sphere | Box | Capsule | Cylinder | null {
         return this.shapes[index] ?? null;
+    }
+
+    /** Returns the index of the shape object in this extension. */
+    public getShapeIndex(shape: Sphere | Box | Capsule | Cylinder): number | undefined {
+        let index = this.shapes.indexOf(shape);
+        if (index == -1)
+            return undefined;
+        else
+            return index;
     }
 
     /** Removes the shape from the list of shapes in this extension. */
@@ -147,13 +156,13 @@ export class KHRImplicitShapes extends Extension {
 		jsonDoc.json.extensions = jsonDoc.json.extensions || {};
 		jsonDoc.json.extensions[NAME] = {
             shapes: this.shapes.map(shape => shapeToShapeDef(shape))
-        } as ImplicitShapesDef;
+        } satisfies ImplicitShapesDef;
 
 		return this;
     }
 }
 
-/** Converts a shape ExtensionProperty into the appropriate GLTF Json object. */
+/** Converts a TS-side shape ExtensionProperty into the appropriate GLTF Json object. */
 function shapeToShapeDef(shape: Sphere | Box | Capsule | Cylinder): ShapeDef {
     return {
         type: shape.getType(),

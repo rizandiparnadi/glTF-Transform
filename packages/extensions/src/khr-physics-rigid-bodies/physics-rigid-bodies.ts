@@ -63,20 +63,15 @@ interface PhysicsRigidBodiesRootDef {
  * - {@link Collider} - Describes the physical representation of a node's shape for collision detection.
  * - {@link PhysicsMaterial} - escribes how the collider should respond to collisions.
  * 
- * TODO: Joints, Constrains the motion of this node relative to another.
- * TODO: Collision filters, which allow for control over which pairs of nodes should collide.
- * TODO: Triggers, Describes a volume which can detect collisions, but does not generate a physical response.
+ * TODO:
+ * - Joints, Constrains the motion of this node relative to another.
+ * - Collision filters, which allow for control over which pairs of nodes should collide.
+ * - Triggers, Describes a volume which can detect collisions, but does not generate a physical response.
  */
 export class KHRPhysicsRigidBodies extends Extension {
     public static readonly EXTENSION_NAME = NAME;
     public readonly extensionName = NAME;
-
-    /**
-     * // TODO: Store these.
-     * physicsMaterials?: Array<PhysicsMaterial>;
-     * physicsJoints?: Array<JointDescription>;
-     * collisionFilters?: Array<CollisionFilter>;
-     */
+    private physicsMaterials: Array<PhysicsMaterial> = [];
 
     public createRigidBody(): RigidBody {
         return new RigidBody(this.document.getGraph());
@@ -110,7 +105,7 @@ export class KHRPhysicsRigidBodies extends Extension {
         const implicitShapesExtension = this.document.createExtension(KHRImplicitShapes);
 
         /** Turn the glTF-side JSON PhysicsMaterialDef into the TS-side PhysicsMaterial. */
-        const physicsMaterials = extensionRoot.physicsMaterials.map((physicsMaterialDef) => {
+        this.physicsMaterials = extensionRoot.physicsMaterials.map((physicsMaterialDef) => {
             return this.createPhysicsMaterial()
                 .setStaticFriction(physicsMaterialDef.staticFriction)
                 .setDynamicFriction(physicsMaterialDef.dynamicFriction)
@@ -145,12 +140,11 @@ export class KHRPhysicsRigidBodies extends Extension {
                 collider = this.createCollider();
 
                 // Get PhysicsMaterial from index.
-                collider.setPhysicsMaterial(physicsMaterials[colliderDef.physicsMaterial]) 
+                collider.setPhysicsMaterial(this.physicsMaterials[colliderDef.physicsMaterial]) 
                 // TODO: Get CollisionFilter from index.
                 // .setCollisionFilter(colliderDef.collisionFilter)
 
                 // Get shape from index
-                // TODO: Handle case when geometry.node instead of geometry.shape is used.
                 const geometryDef = colliderDef.geometry;
                 const shapeIndex = geometryDef.shape;
                 const nodeIndex = geometryDef.node;
@@ -178,7 +172,100 @@ export class KHRPhysicsRigidBodies extends Extension {
     }
 
     public write(context: WriterContext): this {
-        // TODO: Implement write method
-        return this;
+        const jsonDoc = context.jsonDoc;
+
+		if (this.properties.size === 0) return this;
+
+        /** Turn the TS-side PhysicsMaterial into the glTF-side JSON PhysicsMaterialDef. */
+        const physicsMaterialsDefs = this.physicsMaterials.map((material: PhysicsMaterial) => {
+            return {
+                staticFriction: material.getStaticFriction(),
+                dynamicFriction: material.getDynamicFriction(),
+                restitution: material.getRestitution(),
+                restitutionCombine: material.getRestitutionCombine(),
+                frictionCombine: material.getFrictionCombine()
+            }
+        });
+
+        // This extension depends on the KHR_implicit_shapes extension.
+        const implicitShapesExtension = this.document.createExtension(KHRImplicitShapes);
+
+        // Per-node extension objects.
+		this.document
+			.getRoot()
+			.listNodes()
+			.forEach((node: Node) => {
+				const physics = node.getExtension<RigidBody>(KHR_PHYSICS_RIGID_BODIES);
+                if (!physics) return;
+
+                const motionDef = this.motionToMotionDef(physics.getMotion())
+                const colliderDef = this.colliderToColliderDef(physics.getCollider(), implicitShapesExtension);
+
+                const nodeIndex = context.nodeIndexMap.get(node)!;
+                const nodeDef = jsonDoc.json.nodes![nodeIndex];
+                nodeDef.extensions = nodeDef.extensions || {};
+                nodeDef.extensions[KHR_PHYSICS_RIGID_BODIES] ={
+                    motion: motionDef,
+                    collider: colliderDef
+                } satisfies RigidBodyDef;
+			});
+
+        // Top-level extension object.
+		jsonDoc.json.extensions = jsonDoc.json.extensions || {};
+		jsonDoc.json.extensions[KHR_PHYSICS_RIGID_BODIES] = {
+            physicsMaterials: physicsMaterialsDefs,
+            collisionFilters: undefined
+        } satisfies PhysicsRigidBodiesRootDef;
+
+		return this;
     }
-} 
+
+    /** Converts a TS-side Motion ExtensionProperty into the appropriate GLTF Json object. */
+    private motionToMotionDef(motion: Motion | null): MotionDef | undefined {
+        if (!motion) return undefined;
+
+        return {
+            isKinematic: motion.isKinematic(),
+            mass: motion.getMass(),
+            centerOfMass: motion.getCenterOfMass(),
+            inertiaOrientation: motion.getInertiaOrientation(),
+            inertiaDiagonal: motion.getInertiaDiagonal(),
+            linearVelocity: motion.getLinearVelocity(),
+            angularVelocity: motion.getAngularVelocity(),
+            gravityFactor: motion.getGravityFactor()
+        };
+    }
+
+    /** Converts a TS-side Collider ExtensionProperty into the appropriate GLTF Json object. */
+    private colliderToColliderDef(collider: Collider | null, shapesExtension: KHRImplicitShapes): ColliderDef | undefined {
+        if (!collider) return undefined;
+
+        return {
+            geometry: this.geometryToGeometryDef(collider.getGeometry(), shapesExtension),
+            physicsMaterial: getIndex(collider.getPhysicsMaterial(), this.physicsMaterials)!,
+            collisionFilter: -1  // TODO: Implement
+        };
+    }
+
+    /** Converts a TS-side Collider ExtensionProperty into the appropriate GLTF Json object. */
+    private geometryToGeometryDef(geometry: Geometry, shapesExtension: KHRImplicitShapes): GeometryDef {
+        const nodeList = this.document.getRoot().listNodes();
+
+        const shape = geometry.getShape();
+        if (!shape)
+            return { convexHull: false }
+        else if (shape instanceof Node)
+            return { node: getIndex(shape, nodeList), convexHull: true };
+        else
+            return { shape: shapesExtension.getShapeIndex(shape), convexHull: false };
+    }
+}
+
+/** Returns the index of an object in an array. */
+function getIndex<T>(element: T, array: T[]): number | undefined {
+    let index = array.indexOf(element);
+    if (index == -1)
+        return undefined;
+    else
+        return index;
+}

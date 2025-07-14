@@ -85,4 +85,3 @@ export * from './khr-physics-rigid-bodies/index.js';
 export * from './khr-texture-basisu/index.js';
 export * from './khr-texture-transform/index.js';
 export * from './khr-xmp-json-ld/index.js';
-
