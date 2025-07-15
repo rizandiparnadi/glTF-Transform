@@ -155,7 +155,7 @@ export class KHRImplicitShapes extends Extension {
 
 		jsonDoc.json.extensions = jsonDoc.json.extensions || {};
 		jsonDoc.json.extensions[NAME] = {
-            shapes: this.shapes.map(shape => shapeToShapeDef(shape))
+            shapes: this.shapes.map(shape => shapeToJson(shape))
         } satisfies ImplicitShapesDef;
 
 		return this;
@@ -163,7 +163,7 @@ export class KHRImplicitShapes extends Extension {
 }
 
 /** Converts a TS-side shape ExtensionProperty into the appropriate GLTF Json object. */
-function shapeToShapeDef(shape: Sphere | Box | Capsule | Cylinder): ShapeDef {
+function shapeToJson(shape: Sphere | Box | Capsule | Cylinder): ShapeDef {
     return {
         type: shape.getType(),
         sphere: (shape instanceof Sphere) ? { radius: shape.getRadius() } : undefined,

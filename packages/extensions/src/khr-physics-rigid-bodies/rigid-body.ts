@@ -2,10 +2,13 @@ import { ExtensionProperty, PropertyType, type IProperty, type Nullable } from '
 import { KHR_PHYSICS_RIGID_BODIES } from '../constants.js';
 import { Motion } from './motion.js';
 import { Collider } from './collider.js';
+import type { Joint } from './joint.js';
 
 interface IRigidBody extends IProperty {
     motion: Motion;
     collider: Collider;
+    // TODO: trigger
+    joint: Joint;
 }
 
 /**
@@ -26,7 +29,8 @@ export class RigidBody extends ExtensionProperty<IRigidBody> {
     protected getDefaults(): Nullable<IRigidBody> {
         return Object.assign(super.getDefaults() as IProperty, {
             motion: null,
-            collider: null
+            collider: null,
+            joint: null
         });
     }
 
@@ -34,7 +38,6 @@ export class RigidBody extends ExtensionProperty<IRigidBody> {
     public getMotion(): Motion | null {
         return this.getRef('motion');
     }
-
     
     /** The motion properties of this rigid body. */
     public setMotion(motion: Motion | null): this {
@@ -49,5 +52,15 @@ export class RigidBody extends ExtensionProperty<IRigidBody> {
     /** The collider properties of this rigid body. */
     public setCollider(collider: Collider | null): this {
         return this.setRef('collider', collider);
+    }
+
+    /** The joint properties of this rigid body. */
+    public getJoint(): Joint | null {
+        return this.getRef('joint');
+    }
+
+    /** The joint properties of this rigid body. */
+    public setJoint(joint: Joint | null): this {
+        return this.setRef('joint', joint);
     }
 } 

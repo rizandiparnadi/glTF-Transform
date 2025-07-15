@@ -15,7 +15,6 @@ interface ICollider extends IProperty {
  */
 export class Collider extends ExtensionProperty<ICollider> {
     public static EXTENSION_NAME = KHR_PHYSICS_RIGID_BODIES;
-    public static referenceFields = ['geometry'] as const;
     public declare extensionName: typeof KHR_PHYSICS_RIGID_BODIES;
     public declare propertyType: 'Collider';
     public declare parentTypes: [PropertyType.NODE];
@@ -26,10 +25,10 @@ export class Collider extends ExtensionProperty<ICollider> {
         this.parentTypes = [PropertyType.NODE];
     }
 
-    protected getDefaults(): ICollider {
+    protected getDefaults(): Nullable<ICollider> {
         return Object.assign(super.getDefaults() as IProperty, {
-            geometry: new Geometry(this.graph),
-            physicsMaterial: new PhysicsMaterial(this.graph),
+            geometry: null,
+            physicsMaterial: null,
             collisionFilter: null
         });
     }
